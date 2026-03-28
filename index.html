@@ -6,37 +6,43 @@
     <title>Z-Chapter | 极客日记本</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+        body { background-color: #0f172a; color: #f8fafc; font-family: ui-monospace, monospace; }
         .gradient-text { background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(51, 65, 85, 0.5); }
         .hidden { display: none; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(51, 65, 85, 0.5); }
     </style>
 </head>
-<body class="p-4 md:p-8 flex flex-col items-center min-h-screen">
+<body class="p-4 md:p-8 flex flex-col items-center">
 
-    <div class="max-w-2xl w-full glass-card rounded-xl p-6 shadow-2xl">
+    <div class="max-w-2xl w-full glass rounded-xl p-6 shadow-2xl">
         <header class="mb-8 border-b border-slate-700 pb-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold gradient-text cursor-pointer" onclick="location.reload()">Z-Chapter.Log</h1>
-            <div id="auth-status" class="text-[10px] px-2 py-1 rounded bg-slate-800">
-                Checking Auth...
-            </div>
+            <div id="auth-status" class="text-[10px] px-2 py-1 rounded bg-slate-800 text-slate-400 font-bold">Checking...</div>
         </header>
 
         <div id="view-setup" class="hidden py-10 text-center">
-            <p class="text-sm text-slate-400 mb-4">请输入 GitHub Token 激活云端存储</p>
-            <input id="token-input" type="password" class="w-full bg-slate-900 border border-slate-700 rounded p-3 text-xs mb-4 outline-none focus:border-indigo-500" placeholder="ghp_xxxxxxxxxxxx">
-            <button onclick="saveToken()" class="w-full py-3 bg-indigo-600 rounded-lg font-bold text-sm">激活系统</button>
+            <input id="token-input" type="password" class="w-full bg-slate-900 border border-slate-700 rounded p-3 text-xs mb-4 outline-none" placeholder="粘贴 GitHub Token (ghp_...)">
+            <button onclick="saveToken()" class="w-full py-3 bg-indigo-600 rounded-lg font-bold text-sm hover:bg-indigo-500">激活云端同步</button>
         </div>
 
         <div id="view-main" class="hidden">
-            <div class="flex justify-between mb-6">
+            <div class="flex justify-between items-center mb-6">
                 <h2 class="text-slate-400 text-sm">Recent Chapters</h2>
-                <button onclick="showCreate()" class="text-xs bg-emerald-600 ...">+ New</button>
+                <button onclick="showCreate()" class="text-xs bg-emerald-600 px-4 py-1.5 rounded hover:bg-emerald-500 font-bold">+ New</button>
             </div>
             <div id="list-container" class="space-y-3"></div>
         </div>
 
+        <div id="view-form" class="hidden space-y-4">
+            <h3 id="form-header" class="text-xl font-bold text-slate-200">New Chapter</h3>
+            <input id="form-title" type="text" placeholder="标题" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm outline-none focus:border-indigo-500">
+            <textarea id="form-body" rows="8" placeholder="正文 (支持 Markdown)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm outline-none focus:border-indigo-500"></textarea>
+            <div class="flex space-x-3">
+                <button id="save-btn" onclick="saveDiary()" class="flex-1 py-3 bg-indigo-600 rounded-lg font-bold text-sm">保存到 GitHub</button>
+                <button onclick="switchView('view-main')" class="px-6 py-3 bg-slate-800 rounded-lg font-bold text-sm text-slate-400">取消</button>
+            </div>
         </div>
+    </div>
 
     <script>
         const CONFIG = {
@@ -45,57 +51,85 @@
             token: localStorage.getItem('gh_token')
         };
 
+        let allIssues = [];
+        let currentIssue = null;
+
         window.onload = () => {
             if (!CONFIG.token) {
-                document.getElementById('view-setup').classList.remove('hidden');
-                document.getElementById('auth-status').innerHTML = "❌ Unauthorized";
+                switchView('view-setup');
+                document.getElementById('auth-status').innerText = "❌ Unauthorized";
             } else {
-                document.getElementById('view-main').classList.remove('hidden');
-                document.getElementById('auth-status').innerHTML = "✅ Synced";
+                document.getElementById('auth-status').innerText = "✅ Synced";
                 fetchData();
             }
         };
 
         function saveToken() {
             const val = document.getElementById('token-input').value.trim();
-            if (val) {
-                localStorage.setItem('gh_token', val);
-                location.reload();
-            }
+            if (val) { localStorage.setItem('gh_token', val); location.reload(); }
         }
 
         async function fetchData() {
-            const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/issues`, {
-                headers: { 'Authorization': `token ${CONFIG.token}` }
-            });
-            const data = await res.json();
-            renderList(data);
+            try {
+                const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/issues?state=open`, {
+                    headers: { 'Authorization': `token ${CONFIG.token}` }
+                });
+                allIssues = await res.json();
+                renderList();
+            } catch (e) { console.error(e); }
         }
 
-        function renderList(issues) {
-            document.getElementById('list-container').innerHTML = issues.map(i => `
-                <div class="p-3 bg-slate-800/50 border border-slate-700 rounded text-sm mb-2">
-                    <div class="font-bold text-sky-400">${i.title}</div>
-                    <div class="text-[10px] text-slate-500 mt-1">${new Date(i.created_at).toLocaleString()}</div>
+        function renderList() {
+            const container = document.getElementById('list-container');
+            container.innerHTML = allIssues.map(i => `
+                <div class="p-4 bg-slate-800/40 border border-slate-700 rounded-lg hover:border-indigo-500 cursor-pointer" onclick="showEdit(${i.number})">
+                    <h4 class="font-bold text-slate-200">${i.title}</h4>
+                    <p class="text-[10px] text-slate-500 mt-1">${new Date(i.created_at).toLocaleString()}</p>
                 </div>
             `).join('');
+            switchView('view-main');
         }
-        function showCreate() {
-    currentIssue = null; // 清空当前选中，表示是“新建”
-    document.getElementById('form-header').innerText = "New Chapter";
-    document.getElementById('form-title').value = "";
-    document.getElementById('form-body').value = "";
-    switchView('view-form'); // 切换到表单视图
-}
 
-// 基础的视图切换逻辑
-function switchView(viewId) {
-    const views = ['view-main', 'view-form', 'view-detail', 'view-setup'];
-    views.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.toggle('hidden', id !== viewId);
-    });
-}
+        function showCreate() {
+            currentIssue = null;
+            const header = document.getElementById('form-header');
+            if(header) header.innerText = "New Chapter";
+            document.getElementById('form-title').value = "";
+            document.getElementById('form-body').value = "";
+            switchView('view-form');
+        }
+
+        function showEdit(number) {
+            currentIssue = allIssues.find(i => i.number === number);
+            document.getElementById('form-header').innerText = "Edit Chapter";
+            document.getElementById('form-title').value = currentIssue.title;
+            document.getElementById('form-body').value = currentIssue.body;
+            switchView('view-form');
+        }
+
+        async function saveDiary() {
+            const btn = document.getElementById('save-btn');
+            btn.innerText = "保存中...";
+            const title = document.getElementById('form-title').value;
+            const body = document.getElementById('form-body').value;
+            const url = currentIssue 
+                ? `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/issues/${currentIssue.number}`
+                : `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/issues`;
+
+            await fetch(url, {
+                method: currentIssue ? 'PATCH' : 'POST',
+                headers: { 'Authorization': `token ${CONFIG.token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, body })
+            });
+            location.reload();
+        }
+
+        function switchView(viewId) {
+            ['view-main', 'view-form', 'view-setup'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.classList.toggle('hidden', id !== viewId);
+            });
+        }
     </script>
 </body>
 </html>
