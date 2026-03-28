@@ -1,68 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Personal Homepage</title>
+    <title>Chapter.Z | 00后Java极客</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: white;
-            color: black;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: black;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        .hero {
-            background-color: lightgrey;
-            padding: 60px 20px;
-            text-align: center;
-        }
-        .gallery {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            padding: 20px;
-        }
-        .gallery img {
-            width: 100%;
-            height: auto;
-            border: 2px solid black;
-        }
-        footer {
-            background-color: black;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            position: relative;
-            bottom: 0;
-            width: 100%;
-        }
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Courier New', Courier, monospace; }
+        .gradient-text { background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .geek-border { border: 1px solid #334155; border-radius: 8px; }
     </style>
 </head>
-<body>
-    <header>
-        <h1>Welcome to My Personal Homepage</h1>
-    </header>
-    <section class="hero">
-        <h2>My Name/Title</h2>
-    </section>
-    <section class="gallery">
-        <h2>Cars Gallery</h2>
-        <img src="https://via.placeholder.com/300x200?text=Car+1" alt="Car 1">
-        <img src="https://via.placeholder.com/300x200?text=Car+2" alt="Car 2">
-        <img src="https://via.placeholder.com/300x200?text=Car+3" alt="Car 3">
-        <img src="https://via.placeholder.com/300x200?text=Car+4" alt="Car 4">
-        <img src="https://via.placeholder.com/300x200?text=Car+5" alt="Car 5">
-        <img src="https://via.placeholder.com/300x200?text=Car+6" alt="Car 6">
-    </section>
-    <footer>
-        <p>&copy; 2026 My Name. All rights reserved.</p>
-    </footer>
+<body class="p-6 md:p-12 flex flex-col items-center justify-center min-h-screen">
+
+    <div class="max-w-2xl w-full geek-border bg-slate-900/50 p-8 shadow-2xl backdrop-blur-sm">
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold gradient-text mb-2">System.out.println("Hello, I'm Chapter.Z");</h1>
+            <p class="text-slate-400">00后 / Java & Python 开发者 / 广州游野泳选手</p>
+        </header>
+
+        <section class="space-y-4 text-slate-300">
+            <div class="flex items-center space-x-2">
+                <span class="text-sky-400">[Hobby]</span>
+                <span>研究 AI 模型 & 戴着漫步者 W820NB 沉浸式写代码</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="text-indigo-400">[Trait]</span>
+                <span>硬核逻辑底座 + 细腻情感插件 (玩《拣爱》会哭的那种)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="text-emerald-400">[Goal]</span>
+                <span>在广州寻找一个能共鸣的“黑长直”气质灵魂</span>
+            </div>
+        </section>
+
+        <div class="mt-8 pt-6 border-t border-slate-800">
+            <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Tech Stack & Tools</h3>
+            <div class="flex flex-wrap gap-2">
+                <span class="px-3 py-1 bg-slate-800 rounded-full text-xs text-sky-300 border border-sky-900">Java</span>
+                <span class="px-3 py-1 bg-slate-800 rounded-full text-xs text-indigo-300 border border-indigo-900">Spring Boot</span>
+                <span class="px-3 py-1 bg-slate-800 rounded-full text-xs text-emerald-300 border border-emerald-900">Python Scraper</span>
+                <span class="px-3 py-1 bg-slate-800 rounded-full text-xs text-orange-300 border border-orange-900">Ollama/LLM</span>
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center">
+            <button onclick="alert('正在启动情感交互模块...明天方所见！')" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-bold transition-all transform hover:scale-105">
+                Ping Me!
+            </button>
+        </footer>
+    </div>
+
+    <p class="mt-6 text-slate-600 text-xs text-center">
+        Built with Coffee & 2.5mm Crew Cut. <br>
+        Current Location: Guangzhou, China.
+    </p>
+
 </body>
 </html>
